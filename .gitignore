@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+regaloo-menu.zip
+regaloo-menu/preview-*.png
+regaloo-menu/verification.json
