@@ -2,8 +2,10 @@
 
 Open `index.html` in any modern browser. No installation, network access, dependencies, or build is required.
 
-Menu names and prices are editable directly in `index.html`. Design rules are in `style.css`. All artwork is local in `assets/`.
+Menu names and prices are editable directly in `index.html`. The mobile stylesheet is `menu.css`. `identity.css` restores the established artwork and desktop styles. All artwork is local in `assets/`.
 
-Customers can add products, change quantities, and review totals in the cart. `script.js` prepares a WhatsApp order with their name, delivery address or pickup choice, and optional notes. The customer must send the message in WhatsApp. The destination is configured in `WHATSAPP_NUMBER` at the top of `script.js`. Delivery fees are confirmed by the restaurant. Ordering styles are in `ordering.css`.
+Mobile uses one column with 48px add buttons, readable names and prices, and an always-visible cart bar. Desktop preserves the original layout with two or three columns depending on screen width. Buttons display “✓ Ajouté” after addition. Customers can change quantities, remove items, and review totals in the accessible cart dialog.
 
-Artwork was extracted from the supplied 665 × 2365 menu photograph with transparency masks; it was not AI-generated. Its detail is limited by the supplied source resolution. Simple brush and telephone graphics are SVG recreations. The wood texture is sampled from the reference. The logo retains its original branding text; menu text is HTML.
+`script.js` opens `https://wa.me/212725240109` with the complete order encoded using `encodeURIComponent`, including the customer's name, delivery address or pickup choice, and optional notes. The customer sends the message in WhatsApp. Delivery fees require confirmation by the restaurant. A connection is needed to open WhatsApp; the menu itself works offline.
+
+The current artwork consists of AI-generated recreations inspired by the supplied menu, optimized to transparent WebP (except the opaque wood background), and code-drawn SVG decorations. The master PNG files remain outside the website folder.

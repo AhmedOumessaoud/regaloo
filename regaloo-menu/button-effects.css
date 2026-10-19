@@ -1,0 +1,18 @@
+/* Gentle light makes the real cart controls easy to identify. */
+.category .product-button{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(180deg,#ff9a27 0%,#ff7900 48%,#f45c00 100%);color:#1d1004;border:1px solid #ffc073;box-shadow:0 0 0 1px #ff790030,0 3px 10px #0008,inset 0 1px 0 #ffe8c680;transition:background .18s,box-shadow .18s,transform .18s}
+.category .product-button::after{content:"";position:absolute;inset:-30% auto -30% -70%;width:45%;background:linear-gradient(100deg,transparent,#fff8,transparent);transform:skewX(-18deg) translateX(0);pointer-events:none;z-index:-1}
+.category .product-button svg{width:18px;height:18px;flex:none;pointer-events:none}
+.category .product-button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.category .product-button:hover,.category .product-button:focus-visible{background:linear-gradient(#ffb34d,#ff7900);box-shadow:0 0 0 2px #ffce8a80,0 0 22px #ff790080,inset 0 1px #fff8;transform:translateY(-1px)}
+.category .product-button:active{transform:scale(.96)}
+.category .product-button.is-added{background:linear-gradient(#ffeccf,#ffc785);color:#482000;border-color:#fff1d4;box-shadow:0 0 18px #ffad4b80}
+.category .product-button.is-added::after{display:none}
+@media(prefers-reduced-motion:no-preference){
+ .category .product-button.button-in-view{animation:cart-button-glow 3.8s ease-in-out infinite}
+ .category .product-button.button-in-view::after{animation:cart-button-shine 5.5s ease-in-out infinite}
+ .category li:nth-child(2n) .product-button{animation-delay:.4s}
+ .category li:nth-child(3n) .product-button::after{animation-delay:1.1s}
+ @keyframes cart-button-glow{0%,100%{box-shadow:0 0 0 1px #ff790030,0 3px 10px #0008,inset 0 1px #ffe8c680}50%{box-shadow:0 0 0 1px #ffb54c70,0 0 14px #ff790066,inset 0 1px #fff8}}
+ @keyframes cart-button-shine{0%,65%{left:-70%;opacity:0}69%{opacity:.8}85%,100%{left:140%;opacity:0}}
+}
+@media(prefers-reduced-motion:reduce){.category .product-button{transition:none}.category .product-button::after{display:none}.category .product-button:hover{transform:none}}

@@ -1,5 +1,5 @@
 /* Change this number if orders should go to another WhatsApp account. */
-const WHATSAPP_NUMBER = '212787142624';
+const WHATSAPP_NUMBER = '212725240109';
 const products = [];
 const cart = new Map();
 const dialog = document.querySelector('#cart-dialog');
@@ -8,6 +8,15 @@ const cartToggle = document.querySelector('#cart-toggle');
 const totalLabel = document.querySelector('#cart-total');
 const form = document.querySelector('#order-form');
 const checkout = document.querySelector('#checkout');
+const cartButtonIcon = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h3l3 13h11l3-10H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>';
+const visibleButtonObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+  entries.forEach(entry => entry.target.classList.toggle('button-in-view', entry.isIntersecting));
+}, {threshold:.1}) : null;
+cartToggle.textContent = 'Voir mon panier';
+const cartSummary = document.createElement('div');
+cartSummary.className = 'cart-summary';
+cartSummary.innerHTML = '<span class="cart-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h4l3 16h15l4-12H8"/><circle cx="12" cy="27" r="2"/><circle cx="24" cy="27" r="2"/></svg><span class="cart-count">0</span></span><span class="cart-label" role="status" aria-live="polite"></span>';
+document.querySelector('.cart-bar').prepend(cartSummary);
 
 document.querySelectorAll('.category').forEach(section => {
   const category = section.querySelector('h2').textContent.trim();
@@ -25,15 +34,21 @@ function registerProduct(row, category, name, price) {
   button.type = 'button';
   button.className = 'product-button';
   button.setAttribute('aria-label', `Ajouter ${category} — ${name}, ${price} dh`);
-  while (row.firstChild) button.append(row.firstChild);
-  const plus = document.createElement('b');
-  plus.className = 'add-icon';
-  plus.setAttribute('aria-hidden', 'true');
-  plus.textContent = '+';
-  button.append(plus);
+  const resetButton = () => { button.innerHTML = cartButtonIcon + '<span>+ Ajouter</span>'; };
+  resetButton();
+  visibleButtonObserver?.observe(button);
+  let feedbackTimer;
   button.addEventListener('click', () => {
     cart.set(id, (cart.get(id) || 0) + 1);
     updateCart();
+    animateAdd(button);
+    clearTimeout(feedbackTimer);
+    button.textContent = '✓ Ajouté';
+    button.classList.add('is-added');
+    feedbackTimer = setTimeout(() => {
+      resetButton();
+      button.classList.remove('is-added');
+    }, 1400);
     document.querySelector('#order-status').textContent = `${category} — ${name} ajouté au panier`;
   });
   row.append(button);
@@ -41,8 +56,46 @@ function registerProduct(row, category, name, price) {
 
 const lemonRow = document.createElement('li');
 lemonRow.innerHTML = '<span>Jus de citron</span><i aria-hidden="true"></i><strong>8 dh</strong>';
-document.querySelector('.juice .category ul').append(lemonRow);
 registerProduct(lemonRow, 'Jus', 'Jus de citron', 8);
+document.querySelector('.juice .category ul').append(lemonRow);
+document.querySelector('.lemon-order').replaceWith(Object.assign(document.createElement('strong'), {textContent:'8 DH'}));
+
+function animateAdd(button) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const symbol = cartSummary.querySelector('.cart-symbol');
+  const bounce = () => {
+    symbol.getAnimations().forEach(animation => animation.cancel());
+    symbol.animate([
+      {transform:'translateY(0) rotate(0) scale(1)'},
+      {transform:'translateY(-10px) rotate(-12deg) scale(1.18)',offset:.4},
+      {transform:'translateY(2px) rotate(8deg) scale(.95)',offset:.75},
+      {transform:'translateY(0) rotate(0) scale(1)'}
+    ],{duration:500,easing:'ease-out'});
+  };
+  const source = button.closest('.category, .special')?.querySelector('img') || button.closest('.juice, .beverages')?.querySelector('img');
+  if (!button.isConnected) return;
+  if (!source) { bounce(); return; }
+  const start = button.getBoundingClientRect();
+  const end = symbol.getBoundingClientRect();
+  const x = start.left + start.width / 2 - 28;
+  const y = start.top + start.height / 2 - 28;
+  const dx = end.left + end.width / 2 - 28 - x;
+  const dy = end.top + end.height / 2 - 28 - y;
+  const flying = document.createElement('img');
+  flying.src = source.currentSrc || source.src;
+  flying.alt = '';
+  flying.className = 'flying-product';
+  flying.setAttribute('aria-hidden', 'true');
+  flying.style.left = `${x}px`;
+  flying.style.top = `${y}px`;
+  document.body.append(flying);
+  const flight = flying.animate([
+    {transform:'translate(0,0) scale(1)',opacity:1},
+    {transform:`translate(${dx * .45}px,${Math.min(-65, dy * .35 - 50)}px) scale(1.15) rotate(-12deg)`,opacity:1,offset:.4},
+    {transform:`translate(${dx}px,${dy}px) scale(.15) rotate(12deg)`,opacity:.25}
+  ],{duration:650,easing:'cubic-bezier(.3,.05,.7,1)',fill:'forwards'});
+  flight.finished.then(() => { flying.remove(); bounce(); }, () => flying.remove());
+}
 
 function updateCart() {
   cartItems.replaceChildren();
@@ -65,11 +118,14 @@ function updateCart() {
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = delta < 0 ? '−' : '+';
+      button.dataset.productId = id;
+      button.dataset.delta = delta;
       button.setAttribute('aria-label', `${delta < 0 ? 'Retirer' : 'Ajouter'} un ${product.category} ${product.name}`);
       button.addEventListener('click', () => {
         const next = cart.get(id) + delta;
         if (next <= 0) cart.delete(id); else cart.set(id, next);
         updateCart();
+        (cartItems.querySelector(`[data-product-id="${id}"][data-delta="${delta}"]`) || document.querySelector('#close-cart')).focus();
       });
       controls.append(button);
       if (delta < 0) {
@@ -86,13 +142,17 @@ function updateCart() {
     empty.textContent = 'Votre panier est vide. Touchez + sur le menu pour commencer.';
     cartItems.append(empty);
   }
-  cartToggle.textContent = `Voir mon panier (${count}) · ${total} dh`;
+  cartSummary.querySelector('.cart-label').textContent = `${count} article${count === 1 ? '' : 's'} · ${total} DH`;
+  cartSummary.querySelector('.cart-count').textContent = count;
+  cartToggle.setAttribute('aria-label', `Voir mon panier, ${count} articles, ${total} dh`);
+  document.querySelector('.cart-bar').hidden = false;
   totalLabel.textContent = `${total} dh`;
   checkout.disabled = !count;
   document.querySelector('#clear-cart').disabled = !count;
 }
 
 cartToggle.addEventListener('click', () => dialog.showModal());
+document.querySelector('.whatsapp-banner').addEventListener('click', () => dialog.showModal());
 document.querySelector('#close-cart').addEventListener('click', () => dialog.close());
 document.querySelector('#clear-cart').addEventListener('click', () => { cart.clear(); updateCart(); });
 document.querySelector('#delivery-mode').addEventListener('change', event => {
@@ -103,6 +163,7 @@ document.querySelector('#delivery-mode').addEventListener('change', event => {
 
 form.action = `https://wa.me/${WHATSAPP_NUMBER}`;
 form.addEventListener('submit', event => {
+  event.preventDefault();
   if (!cart.size) { event.preventDefault(); return; }
   const lines = ['Bonjour REGALOO, je souhaite commander :', ''];
   let total = 0;
@@ -125,5 +186,6 @@ form.addEventListener('submit', event => {
   if (notes) lines.push(`Remarques : ${notes}`);
   /* Only the composed message is passed to WhatsApp. The customer sends it there. */
   document.querySelector('#whatsapp-message').value = lines.join('\n');
+  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener,noreferrer');
 });
 updateCart();
